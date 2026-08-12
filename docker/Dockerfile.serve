@@ -1,0 +1,30 @@
+# Slim serving image: inference-only deps, non-root user, HEALTHCHECK.
+FROM python:3.11-slim AS base
+WORKDIR /app
+ENV PIP_NO_CACHE_DIR=1 \
+    PIP_DISABLE_PIP_VERSION_CHECK=1
+COPY requirements/serve.txt ./requirements/serve.txt
+RUN pip install --no-cache-dir \
+    --index-url https://download.pytorch.org/whl/cpu \
+    --extra-index-url https://pypi.org/simple \
+    -r requirements/serve.txt
+
+FROM base AS serving
+WORKDIR /app
+ENV PYTHONUNBUFFERED=1 \
+    PYTHONDONTWRITEBYTECODE=1 \
+    CHECKPOINT_PATH=/app/checkpoints/classifier_v1.pt
+
+COPY src/ ./src/
+
+RUN useradd --create-home --uid 10001 appuser \
+    && mkdir -p /app/checkpoints \
+    && chown -R appuser:appuser /app
+USER appuser
+
+EXPOSE 8080
+
+HEALTHCHECK --interval=30s --timeout=5s --start-period=20s --retries=3 \
+    CMD python -c "import urllib.request,sys; sys.exit(0 if urllib.request.urlopen('http://127.0.0.1:8080/health').status==200 else 1)" || exit 1
+
+CMD ["uvicorn", "src.serve:app", "--host", "0.0.0.0", "--port", "8080"]

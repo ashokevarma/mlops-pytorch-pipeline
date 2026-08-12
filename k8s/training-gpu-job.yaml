@@ -1,0 +1,57 @@
+# Bonus: GPU training Job. Kept separate from training-job.yaml so local
+# (CPU-only) clusters like Minikube are unaffected. Apply only on a cluster
+# that has GPU nodes labelled accelerator=nvidia-gpu.
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: cifar10-training-gpu
+  namespace: ml-training
+  labels:
+    app: cifar10-training-gpu
+spec:
+  backoffLimit: 2
+  ttlSecondsAfterFinished: 3600
+  template:
+    metadata:
+      labels:
+        app: cifar10-training-gpu
+    spec:
+      restartPolicy: Never
+      nodeSelector:
+        accelerator: nvidia-gpu
+      tolerations:
+        - key: nvidia.com/gpu
+          operator: Exists
+          effect: NoSchedule
+      containers:
+        - name: trainer
+          image: mlops-train:v1
+          imagePullPolicy: IfNotPresent
+          env:
+            - name: CONFIG_PATH
+              value: /app/configs/training_config.yaml
+          volumeMounts:
+            - name: training-config
+              mountPath: /app/configs
+            - name: data
+              mountPath: /app/data
+            - name: checkpoints
+              mountPath: /app/checkpoints
+          resources:
+            requests:
+              cpu: "2"
+              memory: 4Gi
+            limits:
+              cpu: "2"
+              memory: 4Gi
+              nvidia.com/gpu: 1
+      volumes:
+        - name: training-config
+          configMap:
+            name: training-config
+        - name: data
+          persistentVolumeClaim:
+            claimName: ml-data-pvc
+        - name: checkpoints
+          persistentVolumeClaim:
+            claimName: ml-checkpoints-pvc

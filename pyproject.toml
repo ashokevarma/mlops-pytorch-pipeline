@@ -1,0 +1,17 @@
+[project]
+name = "mlops-pytorch-pipeline"
+version = "0.1.0"
+description = "CIFAR-10 image classifier taken through the full Docker + Kubernetes deployment lifecycle."
+requires-python = ">=3.10"
+
+[tool.ruff]
+line-length = 100
+target-version = "py311"
+
+[tool.ruff.lint]
+select = ["E", "F", "I"]
+ignore = ["E501"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+addopts = "-q"

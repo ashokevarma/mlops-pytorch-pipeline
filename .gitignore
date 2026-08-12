@@ -1,0 +1,28 @@
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+.pytest_cache/
+.ruff_cache/
+
+# Virtual environments
+.venv/
+venv/
+env/
+
+# Secrets / local env
+.env
+*.local.env
+
+# Data & model artifacts (never commit; use volumes / DVC / a registry)
+data/
+checkpoints/
+*.pt
+*.pth
+*.onnx
+
+# Editor / OS
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db

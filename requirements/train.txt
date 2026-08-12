@@ -1,0 +1,6 @@
+# Training dependencies (pinned for reproducible builds).
+# CPU wheels resolve by default; a CUDA base image will pull matching GPU wheels.
+torch==2.3.1
+torchvision==0.18.1
+numpy==1.26.4
+PyYAML==6.0.1

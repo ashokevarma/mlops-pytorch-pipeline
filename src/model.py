@@ -1,6 +1,4 @@
-"""Model definitions: ResNet-18 (CIFAR stem) and a small CNN."""
-from __future__ import annotations
-
+"""Model definitions: ResNet-18 with a CIFAR stem, and a small CNN."""
 import torch.nn as nn
 from torchvision import models
 
@@ -38,7 +36,7 @@ class SimpleCNN(nn.Module):
 
 
 def _resnet18_cifar(num_classes: int) -> nn.Module:
-    # 3x3 stride-1 stem (no maxpool) so 32x32 CIFAR images keep spatial detail.
+    # The default 7x7 stride-2 stem and maxpool are too aggressive for 32x32 images.
     model = models.resnet18(weights=None, num_classes=num_classes)
     model.conv1 = nn.Conv2d(3, 64, kernel_size=3, stride=1, padding=1, bias=False)
     model.maxpool = nn.Identity()

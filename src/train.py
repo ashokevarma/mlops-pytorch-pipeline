@@ -1,6 +1,4 @@
-"""CIFAR-10 training: config-driven, JSON logs, best-checkpoint + early stopping."""
-from __future__ import annotations
-
+"""Train a CIFAR-10 classifier. Every setting comes from the config file."""
 import json
 import os
 import random

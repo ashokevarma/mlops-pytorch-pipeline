@@ -1,7 +1,7 @@
 [project]
 name = "mlops-pytorch-pipeline"
 version = "0.1.0"
-description = "CIFAR-10 image classifier taken through the full Docker + Kubernetes deployment lifecycle."
+description = "CIFAR-10 classifier trained and served on Kubernetes."
 requires-python = ">=3.10"
 
 [tool.ruff]

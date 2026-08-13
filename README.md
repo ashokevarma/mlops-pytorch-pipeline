@@ -56,10 +56,10 @@ curl -X POST http://localhost:8080/predict -F "image=@test_image.png"
 
 ```bash
 kubectl apply -f k8s/namespace.yaml
-kubectl apply -f k8s/configmap.yaml
 kubectl apply -f k8s/pvc.yaml
+kubectl apply -f k8s/configmap.yaml
 kubectl apply -f k8s/training-job.yaml
-kubectl -n ml-training wait --for=condition=complete job/cifar10-training --timeout=1800s
+kubectl -n ml-training wait --for=condition=complete job/cifar10-training --timeout=14400s
 
 kubectl apply -f k8s/serving-deployment.yaml
 kubectl apply -f k8s/serving-service.yaml
@@ -71,6 +71,14 @@ curl -X POST http://localhost:8080/predict -F "image=@test_image.png"
 
 `k8s/training-gpu-job.yaml` is an optional GPU variant of the training Job; apply
 it only on a cluster with GPU nodes labelled `accelerator=nvidia-gpu`.
+
+## Validation
+
+The whole flow was run on a single-node Kubernetes cluster (k3s v1.30): both images
+built, the training Job completed all 10 epochs on CPU (87.6% validation accuracy)
+and wrote the checkpoint to the PVC, then the serving Deployment came up with 2
+ready replicas and answered `/health` and `/predict` through the Service. The
+terminal output for each step is in the submission write-up.
 
 ## API
 

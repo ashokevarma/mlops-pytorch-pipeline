@@ -1,5 +1,4 @@
-# Inference-only dependencies (no training extras such as tensorboard).
-# Kept deliberately lean to keep the serving image small.
+# Inference only, so the serving image stays smaller than the training one.
 torch==2.3.1
 torchvision==0.18.1
 fastapi==0.111.0

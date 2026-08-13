@@ -19,7 +19,7 @@ data:
     data:
       dataset: cifar10
       data_dir: /app/data
-      num_workers: 2
+      num_workers: 4
     output:
       checkpoint_dir: /app/checkpoints
       model_name: classifier_v1.pt

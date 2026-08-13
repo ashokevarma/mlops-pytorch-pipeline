@@ -14,7 +14,7 @@ env/
 .env
 *.local.env
 
-# Data & model artifacts (never commit; use volumes / DVC / a registry)
+# Data and checkpoints (these live on a volume, not in git)
 data/
 checkpoints/
 *.pt

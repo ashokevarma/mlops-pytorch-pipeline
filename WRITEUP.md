@@ -1,43 +1,40 @@
-# Reflection: Deploying a PyTorch Classifier with Docker & Kubernetes
+# Reflection
 
-This project took a CIFAR-10 image classifier from a single training script all
-the way to a scalable, orchestrated service, and the most valuable lesson was
-how much of "MLOps" is really about drawing clean seams between *code*, *data*,
-*configuration*, and *environment*. The Python was the easy part; the
-interesting engineering was everything around it.
+This assignment took a CIFAR-10 classifier from a single training script to a
+containerised training Job and a serving Deployment running on Kubernetes. The
+PyTorch part was the part I already knew how to do. Almost all the time went
+into everything around it: where the data lives, where the model file lives,
+and how one workload hands something to another.
 
-**The most challenging part** was the storage and configuration boundary
-between the training Job and the serving Deployment. Training produces a
-checkpoint, and serving must consume it — but the two run as completely separate
-Kubernetes workloads with independent lifecycles. I solved this with a shared
-`PersistentVolumeClaim`: the Job mounts it read-write at `/app/checkpoints`, and
-the Deployment mounts the *same* claim read-only. This immediately surfaced a
-production caveat: a `ReadWriteOnce` volume only works when both workloads land
-on the same node, so a real multi-node cluster needs a `ReadWriteMany` backend
-(NFS/EFS) or, better, an object store plus a model registry. Designing for the
-single-node minikube case while documenting the multi-node path was a useful
-exercise in being honest about a solution's limits.
+The hardest part was the boundary between training and serving. Training writes
+a checkpoint, serving has to read it, but the two are separate Kubernetes
+objects with separate lifecycles. I used one PersistentVolumeClaim for it: the
+Job mounts it read-write at /app/checkpoints and the Deployment mounts the same
+claim read-only. That works, but it only works because everything runs on one
+node. The claim is ReadWriteOnce, so on a real multi-node cluster the serving
+pods could be scheduled somewhere else and would not see the file. A proper
+setup would use a ReadWriteMany volume or push the checkpoint to object storage
+or a model registry. I decided it was better to keep the simple version and be
+clear about where it breaks.
 
-A close second was **keeping the two Docker images honest about their jobs**.
-The training image is multi-stage so the pinned dependency layer is cached and
-only the source layer rebuilds on code changes. The serving image is a
-different discipline entirely: inference-only dependencies (no `tensorboard`),
-a non-root user, an explicit `HEALTHCHECK`, and a fixed port. Splitting
-`requirements/train.txt` from `requirements/serve.txt` made the serving image
-noticeably leaner and reinforced why you rarely want one "does-everything"
-container in production.
+Splitting the two Docker images also took some thought. At first I had one
+image for both, then it was obvious that serving does not need the training
+dependencies. So there are two requirements files and two Dockerfiles. The
+training image is multi-stage, so the layer with torch in it is cached and only
+the source layer rebuilds when I change code. The serving image adds a non-root
+user, a fixed port and a HEALTHCHECK. Rebuilding after a code change went from
+minutes to seconds once the dependency layer stopped being invalidated.
 
-Getting the **health probes** right also took iteration. The serving app
-returns `503` from `/health` until the checkpoint is loaded, which is exactly
-what a Kubernetes *readiness* probe needs so the Service withholds traffic until
-a replica can actually answer. Pairing that with a *liveness* probe (restart a
-wedged container) and a rolling-update strategy of `maxUnavailable: 0` gave
-zero-downtime deploys — something that only becomes obvious once you watch pods
-cycle during `kubectl rollout`.
+The probes took a couple of tries to get right. /health returns 503 until the
+checkpoint is actually loaded into memory, which is what makes the readiness
+probe useful: the Service does not send traffic to a pod that cannot answer
+yet. The liveness probe uses the same endpoint but for a different reason, to
+restart a container that has stopped responding. With maxUnavailable set to 0
+in the rolling update, a new version comes up before an old pod goes away.
 
-Finally, the **Git discipline** — a `develop` branch, one hypothesis per
-feature branch, and Conventional Commits — felt like overhead at first but paid
-off: each change was small, reviewable, and independently verifiable. If I
-extended this project I would add DVC for dataset versioning, push images to a
-registry with immutable tags, and add request-latency-based autoscaling, since
-CPU is a poor proxy for inference load.
+The Git workflow felt like extra work at the start. Four feature branches, four
+pull requests into develop, then one release pull request into main. By the end
+I was glad I did it that way, because each change was small enough to check on
+its own. If I continued this project I would version the dataset properly, push
+the images to a registry with fixed tags instead of building on the node, and
+scale on request latency rather than CPU.

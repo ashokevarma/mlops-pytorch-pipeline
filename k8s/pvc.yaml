@@ -1,4 +1,4 @@
-# PVCs shared by the training Job (read-write) and serving Deployment (read-only).
+# One claim for the dataset, one for the checkpoint the serving pods read.
 apiVersion: v1
 kind: PersistentVolumeClaim
 metadata:

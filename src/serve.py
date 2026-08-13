@@ -1,6 +1,4 @@
 """FastAPI inference service: GET /health and POST /predict."""
-from __future__ import annotations
-
 import io
 import os
 import sys
@@ -63,7 +61,7 @@ async def predict(image: UploadFile = File(...)):
     raw = await image.read()
     try:
         pil_image = Image.open(io.BytesIO(raw)).convert("RGB")
-    except Exception as exc:  # noqa: BLE001
+    except Exception as exc:
         raise HTTPException(status_code=400, detail=f"invalid image: {exc}") from exc
 
     tensor = _transform(pil_image).unsqueeze(0)

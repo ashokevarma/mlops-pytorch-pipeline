@@ -1,4 +1,5 @@
-# Multi-stage training image: cache deps in stage 1, add code in stage 2.
+# Dependencies in the first stage, code in the second, so a code change
+# does not reinstall torch.
 FROM python:3.11-slim AS base
 WORKDIR /app
 ENV PIP_NO_CACHE_DIR=1 \

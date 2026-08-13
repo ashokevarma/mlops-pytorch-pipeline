@@ -1,6 +1,4 @@
-# Bonus: GPU training Job. Kept separate from training-job.yaml so local
-# (CPU-only) clusters like Minikube are unaffected. Apply only on a cluster
-# that has GPU nodes labelled accelerator=nvidia-gpu.
+# Bonus. Apply only on a cluster with GPU nodes labelled accelerator=nvidia-gpu.
 apiVersion: batch/v1
 kind: Job
 metadata:

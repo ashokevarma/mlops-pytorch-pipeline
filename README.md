@@ -1,7 +1,7 @@
 # mlops-pytorch-pipeline
 
-A CIFAR-10 image classifier taken through the full deployment lifecycle: local
-training → Docker containerization → training + serving on Kubernetes.
+A CIFAR-10 image classifier taken from local training to Docker images to
+training and serving on Kubernetes.
 
 ## Architecture
 
@@ -15,9 +15,6 @@ training → Docker containerization → training + serving on Kubernetes.
                                               Service (ClusterIP :80 → :8080)
 ```
 
-The training Job writes the checkpoint to a PVC; the serving Deployment mounts
-the same PVC read-only and is exposed by a Service.
-
 ## Layout
 
 ```
@@ -28,6 +25,7 @@ k8s/         namespace, configmap, pvc, training-job,
              training-gpu-job (bonus), serving-deployment, serving-service
 requirements/train.txt, serve.txt
 tests/       test_model.py
+screenshots/ terminal output from the validation run
 ```
 
 ## Local run
@@ -74,16 +72,16 @@ it only on a cluster with GPU nodes labelled `accelerator=nvidia-gpu`.
 
 ## Validation
 
-The whole flow was run on a single-node Kubernetes cluster (k3s v1.30): both images
-built, the training Job completed all 10 epochs on CPU (87.6% validation accuracy)
-and wrote the checkpoint to the PVC, then the serving Deployment came up with 2
-ready replicas and answered `/health` and `/predict` through the Service. The
-terminal output for each step is in the submission write-up.
+Run end to end on single-node k3s v1.30: both images built, the training Job
+completed 10 epochs on CPU at 87.6% validation accuracy and wrote the checkpoint
+to the PVC, then 2 serving replicas came up and answered `/health` and
+`/predict` through the Service. Screenshots of every step are in
+`screenshots/` and in the description of the final PR.
 
 ## API
 
 - `GET /health` → `200` with `{status, checkpoint, classes}` when the model is loaded, else `503`.
 - `POST /predict` → multipart form field `image`; returns `{top, predictions:[{class, probability}]}`.
 
-All hyperparameters live in `configs/training_config.yaml` (mounted as the
-`training-config` ConfigMap in Kubernetes).
+Hyperparameters live in `configs/training_config.yaml`, mounted as the
+`training-config` ConfigMap in Kubernetes.

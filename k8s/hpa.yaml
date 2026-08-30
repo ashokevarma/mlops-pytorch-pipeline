@@ -1,0 +1,24 @@
+# Scales the serving Deployment on CPU. Needs metrics-server in the cluster.
+# minReplicas stays at 2 so the Deployment never drops below the two replicas
+# the assignment asks for.
+apiVersion: autoscaling/v2
+kind: HorizontalPodAutoscaler
+metadata:
+  name: model-serving
+  namespace: ml-training
+  labels:
+    app: model-serving
+spec:
+  scaleTargetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: model-serving
+  minReplicas: 2
+  maxReplicas: 5
+  metrics:
+    - type: Resource
+      resource:
+        name: cpu
+        target:
+          type: Utilization
+          averageUtilization: 70
